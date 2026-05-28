@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: ActivityReccomender
+  meteo:
+    key: NoKeyNeededForOpenMeteoNonCommercialUse
+    hostname: https://api.open-meteo.com
+
+logging:
+  level:
+    org.springframework.web.reactive.function.client: DEBUG
+    reactor.netty.http.client: DEBUG

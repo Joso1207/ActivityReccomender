@@ -1,0 +1,12 @@
+package org.chasapi.activityreccomender.dto;
+
+import lombok.Builder;
+
+@Builder
+public record CurrentWeatherData(
+        String time,
+        int interval,
+        double temperature_2m,
+        double precipitation,
+        int weather_code
+) {}
