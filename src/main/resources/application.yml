@@ -2,8 +2,11 @@ spring:
   application:
     name: ActivityReccomender
   meteo:
-    key: NoKeyNeededForOpenMeteoNonCommercialUse
+    token: NoKeyNeededForOpenMeteoNonCommercialUse
     hostname: https://api.open-meteo.com
+  geoApify:
+    key: ${geoKey}
+    hostname: https://api.geoapify.com
 
 logging:
   level:

@@ -16,8 +16,8 @@ import java.util.Set;
 @Service
 public class OpenMeteoClient {
 
-    @Value("${spring.meteo.key}")
-    private String apiKey;
+    @Value("${spring.meteo.token}")
+    private String Token;
 
     private final WebClient client;
 
