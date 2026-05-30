@@ -1,4 +1,4 @@
-package org.chasapi.activityreccomender.dto;
+package org.chasapi.activityreccomender.dto.weather;
 
 import lombok.Builder;
 

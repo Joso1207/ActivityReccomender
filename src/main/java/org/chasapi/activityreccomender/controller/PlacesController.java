@@ -1,8 +1,7 @@
 package org.chasapi.activityreccomender.controller;
 
 import org.chasapi.activityreccomender.dto.InputCordinates;
-import org.chasapi.activityreccomender.dto.geoApify.GeoApifyResponse;
-import org.chasapi.activityreccomender.dto.geoApify.PlacesRequest;
+import org.chasapi.activityreccomender.dto.places.GeoApifyResponse;
 import org.chasapi.activityreccomender.service.PlacesService;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;

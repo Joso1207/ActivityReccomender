@@ -1,9 +1,8 @@
 package org.chasapi.activityreccomender.controller;
 
 import org.chasapi.activityreccomender.dto.InputCordinates;
-import org.chasapi.activityreccomender.dto.WeatherResponse;
+import org.chasapi.activityreccomender.dto.weather.WeatherResponse;
 import org.chasapi.activityreccomender.service.WeatherService;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

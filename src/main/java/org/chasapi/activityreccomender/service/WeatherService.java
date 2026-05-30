@@ -1,6 +1,6 @@
 package org.chasapi.activityreccomender.service;
 
-import org.chasapi.activityreccomender.dto.WeatherResponse;
+import org.chasapi.activityreccomender.dto.weather.WeatherResponse;
 import org.chasapi.activityreccomender.webclient.OpenMeteoClient;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;

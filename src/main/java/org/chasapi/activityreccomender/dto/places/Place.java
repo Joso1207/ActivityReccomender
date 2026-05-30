@@ -1,4 +1,4 @@
-package org.chasapi.activityreccomender.dto.geoApify;
+package org.chasapi.activityreccomender.dto.places;
 
 import lombok.Builder;
 
