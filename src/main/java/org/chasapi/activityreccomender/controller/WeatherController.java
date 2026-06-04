@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+
+//This was used to test the behavior of the external API, purely here to show the process of development
+
 @RestController
 @RequestMapping("/weather")
 public class WeatherController {

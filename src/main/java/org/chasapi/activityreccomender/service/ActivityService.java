@@ -10,6 +10,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+//There was plans of splitting this into two different services but ultimately for this its not needed.
+//The places and weather services would not have any additional logic other than calling the clients since its this class that decides what the clients should fetch
+
 @Service
 public class ActivityService {
 

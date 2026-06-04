@@ -5,6 +5,8 @@ import org.chasapi.activityreccomender.webclient.OpenMeteoClient;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+//This was used to test the behavior of the external API, purely here to show the process of development
+
 @Service
 public class WeatherService {
 

@@ -8,6 +8,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+//This was used to test the behavior of the external API, purely here to show the process of development
+
 @Service
 public class PlacesService {
 
