@@ -16,9 +16,13 @@ public class ActivityController {
         this.service = service;
     }
 
-    @GetMapping("/activity")
-    public Mono<ActivityResponse> getActivities(@RequestBody InputCordinates cordinates){
-        return service.getActivities(cordinates);
+    @GetMapping("/activityFromCordinate")
+    public Mono<ActivityResponse> getCordinateActivities(@RequestBody InputCordinates cordinates){
+        return service.getActivitiesByCoordinate(cordinates);
     }
 
+    @GetMapping("/activity")
+    public Mono<ActivityResponse> getLocationActivities(@RequestParam String query){
+        return service.getActivity(query);
+    }
 }

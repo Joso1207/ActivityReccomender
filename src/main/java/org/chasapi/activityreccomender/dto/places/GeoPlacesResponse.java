@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public record GeoApifyResponse (
-        String type,
+public record GeoPlacesResponse(
+        Boolean isAvailable,
 
         @JsonProperty("features")
         List<Place> place){

@@ -1,0 +1,35 @@
+spring:
+  meteo:
+    hostname: http://localhost
+    token: test
+  geoApify:
+    key: dummykey
+    hostname: http://localhost
+
+resilience4j:
+  timelimiter:
+    instances:
+      openmeteo-api:
+        timeoutDuration: 30s
+      geoapify-api:
+        timeoutDuration: 30s
+  circuitbreaker:
+    instances:
+      openmeteo-api:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 2
+        minimumNumberOfCalls: 2
+        failureRateThreshold: 50
+        waitDurationInOpenState: 2s
+        permittedNumberOfCallsInHalfOpenState: 1
+      geoapify-api:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 2
+        minimumNumberOfCalls: 2
+        failureRateThreshold: 50
+        waitDurationInOpenState: 2s
+        permittedNumberOfCallsInHalfOpenState: 1
+
+logging:
+  level:
+    io.github.resilience4j: DEBUG

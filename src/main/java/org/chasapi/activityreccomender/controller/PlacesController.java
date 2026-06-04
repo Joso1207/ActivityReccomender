@@ -1,7 +1,7 @@
 package org.chasapi.activityreccomender.controller;
 
 import org.chasapi.activityreccomender.dto.InputCordinates;
-import org.chasapi.activityreccomender.dto.places.GeoApifyResponse;
+import org.chasapi.activityreccomender.dto.places.GeoPlacesResponse;
 import org.chasapi.activityreccomender.service.PlacesService;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -19,7 +19,7 @@ public class PlacesController {
     }
 
     @GetMapping("/near")
-    public Mono<GeoApifyResponse> getPlaces(
+    public Mono<GeoPlacesResponse> getPlaces(
             @RequestParam double latitude,
             @RequestParam double longitude,
             @RequestParam(name = "categories") List<String> categories

@@ -5,8 +5,8 @@ import lombok.Builder;
 @Builder
 public record CurrentWeatherData(
         String time,
-        int interval,
-        double temperature_2m,
-        double precipitation,
-        int weather_code
+        Integer interval,
+        Double temperature_2m,
+        Double precipitation,
+        Integer weather_code
 ) {}

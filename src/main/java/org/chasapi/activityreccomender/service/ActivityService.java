@@ -23,25 +23,46 @@ public class ActivityService {
 
     private final List<String> indoorActivities = List.of("Stay inside","Bowling","Cinema","Entertainment");
     private final List<String> outDoorActivities = List.of("Enjoy the weather","Camp","BirdWatch","Swim");
+    private final List<String> unknownWeatherActivityes= List.of("Depends on weather, Shopping, Resturaunt, Entertainment");
 
-    public Mono<ActivityResponse> getActivities(InputCordinates cordinates){
-        return weatherClient.getWeather(cordinates.latitude(),cordinates.longitude()
+    public Mono<ActivityResponse> getActivity(String query) {
+        return placesClient.getGeoLocation(query)
+                .flatMap(geoLocationResponse -> {
+                    InputCordinates coordinates = InputCordinates.builder()
+                            .latitude(geoLocationResponse.features().getFirst().properties().lat())
+                            .longitude(geoLocationResponse.features().getFirst().properties().lon())
+                            .build();
+
+                    return getActivitiesByCoordinate(coordinates);
+                });
+    }
+
+
+    public Mono<ActivityResponse> getActivitiesByCoordinate(InputCordinates coordinates){
+        return weatherClient.getWeather(coordinates.latitude(), coordinates.longitude()
         ).flatMap(weatherResponse ->{
             String category;
 
-            if (weatherResponse.current().weather_code() <= WeatherCode.OVERCAST.getCode()){
-                category = "leisure.park";
+
+            if(!weatherResponse.isAvailable()){
+                category = "entertainment,commercial,catering";
+            }
+            else if (weatherResponse.current().weather_code() <= WeatherCode.OVERCAST.getCode()){
+                category = "leisure.park,heritage,tourism";
             } else {
                 category = "entertainment";
             }
 
             return placesClient.getPlacesNearLocation(
-                    cordinates.latitude(), cordinates.longitude(),
+                    coordinates.latitude(), coordinates.longitude(),
                     List.of(category)
             ).map(placeReponse ->{
 
                 List<String> activities;
-                if (weatherResponse.current().weather_code() <= WeatherCode.OVERCAST.getCode()){
+                if(!weatherResponse.isAvailable()){
+                    activities = List.copyOf(unknownWeatherActivityes);
+                }
+                else if (weatherResponse.current().weather_code() <= WeatherCode.OVERCAST.getCode()){
                     activities = List.copyOf(outDoorActivities);
                 } else {
                     activities = List.copyOf(indoorActivities);
@@ -50,7 +71,11 @@ public class ActivityService {
                 return new ActivityResponse(
                         WeatherCode.fromCode(weatherResponse.current().weather_code()).getDescription(),
                         activities,
-                        placeReponse.place());
+                        placeReponse.place(),
+                        weatherResponse.isAvailable(),
+                        placeReponse.isAvailable()
+
+                );
             });
         });
     }

@@ -2,12 +2,13 @@ package org.chasapi.activityreccomender.dto.weather;
 
 import lombok.Builder;
 
-@Builder
+@Builder(toBuilder = true)
 public record WeatherResponse(
-        double latitude,
-        double longitude,
+        Double latitude,
+        Double longitude,
         String timezone,
         String timezone_abbreviation,
         CurrentWeatherData current,
-        HourlyWeatherData hourly
+        HourlyWeatherData hourly,
+        Boolean isAvailable
 ) {}

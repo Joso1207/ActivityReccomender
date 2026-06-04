@@ -1,7 +1,7 @@
 package org.chasapi.activityreccomender.service;
 
 import org.chasapi.activityreccomender.dto.InputCordinates;
-import org.chasapi.activityreccomender.dto.places.GeoApifyResponse;
+import org.chasapi.activityreccomender.dto.places.GeoPlacesResponse;
 import org.chasapi.activityreccomender.webclient.GeoApifyClient;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -17,7 +17,7 @@ public class PlacesService {
         this.client = client;
     }
 
-    public Mono<GeoApifyResponse> getPlacesWithCategories( InputCordinates cordinates, List<String> categories){
+    public Mono<GeoPlacesResponse> getPlacesWithCategories(InputCordinates cordinates, List<String> categories){
         return client.getPlacesNearLocation(cordinates.latitude(),cordinates.longitude(),categories);
     }
 
