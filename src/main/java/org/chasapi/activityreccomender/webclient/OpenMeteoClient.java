@@ -48,8 +48,8 @@ public class OpenMeteoClient {
                         .queryParam("current", "temperature_2m,precipitation,weather_code")
                         .queryParam("hourly","temperature_2m,weather_code,precipitation,precipitation_probability,wind_speed_10m")
                         .queryParam("forecast_days",1)
-                        /* Not needed but showing how Query Auth works
-                        .queryParam("apikey",apiKey)
+                        /* Not needed but showing how Auth Headers are sent,
+                        .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                          */
                         .build())
                 .retrieve()
