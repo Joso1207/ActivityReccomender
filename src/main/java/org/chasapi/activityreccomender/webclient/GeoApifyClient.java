@@ -1,11 +1,13 @@
 package org.chasapi.activityreccomender.webclient;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.chasapi.activityreccomender.dto.places.GeoLocationResponse;
 import org.chasapi.activityreccomender.dto.places.GeoPlacesResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory;
+import org.springframework.core.codec.DecodingException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
@@ -18,6 +20,7 @@ import java.time.Duration;
 import java.util.List;
 
 @Service
+@Slf4j
 public class GeoApifyClient {
 
     @Value("${spring.geoApify.key}")
@@ -44,7 +47,7 @@ public class GeoApifyClient {
                         .build())
                 .retrieve()
                 .bodyToMono(GeoLocationResponse.class)
-                .map(response -> response.toBuilder().isAvailable(true).build())
+
                 .retryWhen(Retry.backoff(3,Duration.ofSeconds(2)).scheduler(retryScheduler)
                         .filter(ex -> {
                             if (ex instanceof WebClientRequestException) {
@@ -55,8 +58,25 @@ public class GeoApifyClient {
                             }
                             return false;
                         })
-                );
-        return circuitBreaker.run(request,ex->Mono.just(new GeoLocationResponse(null,false)));
+                )
+                .map(response -> response.toBuilder().isAvailable(true).build())
+                .onErrorResume(ex -> ex instanceof DecodingException, ex ->
+                        Mono.error(new RuntimeException(
+                                "Failed to decode WeatherResponse from API", ex))
+                )
+                .doOnNext(r -> System.out.println("SUCCESS: " + r))
+                .doOnError(e -> System.out.println("ERROR: " + e.getClass() + " - " + e.getMessage()))
+                .doOnSubscribe(s -> System.out.println("SUBSCRIBED"))
+                .doFinally(signal -> System.out.println("TERMINATED: " + signal))
+                .doOnCancel(() -> {
+                    System.out.println("CANCELLED - capturing stack");
+                    new RuntimeException("cancel trace").printStackTrace();
+                });
+
+        return circuitBreaker.run(request,ex->{
+            System.err.println(ex.getMessage());
+            return Mono.just(new GeoLocationResponse(List.of(), false));
+        });
     }
 
     public Mono<GeoPlacesResponse> getPlacesNearLocation(Double latitude, Double longitude, List<String> categories){
