@@ -7,11 +7,15 @@ spring:
   geoApify:
     key: ${geoKey}
     hostname: https://api.geoapify.com
+  openai:
+    token: ${openAiToken}
 
-resilience:
+resilience4j:
   timelimiter:
     instances:
       openmeteo-api:
+        timeoutDuration: 5s
+      geoapify-api:
         timeoutDuration: 5s
   circuitbreaker:
     instances:
@@ -50,5 +54,9 @@ resilience:
 
 logging:
   level:
+    io.github.resilience4j: TRACE
+    org.springframework.cloud.circuitbreaker: TRACE
+    org.springframework.cloud.client.circuitbreaker: TRACE
+    reactor.core.publisher: DEBUG
     org.springframework.web.reactive.function.client: DEBUG
     reactor.netty.http.client: DEBUG
