@@ -62,7 +62,7 @@ public class GeoApifyClient {
                 .map(response -> response.toBuilder().isAvailable(true).build())
                 .onErrorResume(ex -> ex instanceof DecodingException, ex ->
                         Mono.error(new RuntimeException(
-                                "Failed to decode WeatherResponse from API", ex))
+                                "Failed to decode GeoLocation from API", ex))
                 )
                 .doOnNext(r -> System.out.println("SUCCESS: " + r))
                 .doOnError(e -> System.out.println("ERROR: " + e.getClass() + " - " + e.getMessage()))
@@ -90,7 +90,6 @@ public class GeoApifyClient {
                         .build())
                 .retrieve()
                 .bodyToMono(GeoPlacesResponse.class)
-                .map(response -> new GeoPlacesResponse(true,response.place()))
                 .retryWhen(Retry.backoff(3, Duration.ofSeconds(3)).scheduler(retryScheduler)
                         .filter(ex -> {
                             if (ex instanceof WebClientRequestException) {
@@ -101,7 +100,20 @@ public class GeoApifyClient {
                             }
                             return false;
                         })
-                );
+                )
+                .map(response -> new GeoPlacesResponse(true,response.place()))
+                .onErrorResume(ex -> ex instanceof DecodingException, ex ->
+                        Mono.error(new RuntimeException(
+                                "Failed to decode Places data from API", ex))
+                )
+                .doOnNext(r -> System.out.println("SUCCESS: " + r))
+                .doOnError(e -> System.out.println("ERROR: " + e.getClass() + " - " + e.getMessage()))
+                .doOnSubscribe(s -> System.out.println("SUBSCRIBED"))
+                .doFinally(signal -> System.out.println("TERMINATED: " + signal))
+                .doOnCancel(() -> {
+                    System.out.println("CANCELLED - capturing stack");
+                    new RuntimeException("cancel trace").printStackTrace();
+                });
         return circuitBreaker.run(
              request,
              ex -> Mono.just(
