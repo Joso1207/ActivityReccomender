@@ -6,8 +6,8 @@ It combines **Open-Meteo weather data**, **Geoapify activity categories**, and a
 In order to run the project you need to supply your own API-KEYS from openAI and GeoApify.
 
 Assign them to Vars
-geoKey
-openAiToken
+-geoKey
+-openAiToken
 
 
 ---
