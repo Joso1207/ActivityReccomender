@@ -10,7 +10,7 @@ spring:
   openai:
     token: ${openAiToken}
 
-resilience4j:
+resilience:
   timelimiter:
     instances:
       openmeteo-api:
