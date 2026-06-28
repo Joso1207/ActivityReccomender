@@ -3,41 +3,46 @@ package org.chasapi.activityreccomender.service;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import lombok.extern.java.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.chasapi.activityreccomender.dto.AiResponseDTO;
 import org.chasapi.activityreccomender.dto.weather.WeatherResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.exc.StreamReadException;
 import tools.jackson.databind.DatabindException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 @Service
+@Slf4j
 public class AiClientService {
 
-    private final ObjectMapper objectMapper;
     @Value("${spring.openai.token}")
     private String apiKey;
 
+    private final ObjectMapper objectMapper;
     private final RestClient client;
     private final Validator validator;
 
-    public AiClientService(ObjectMapper objectMapper, Validator validator) {
+
+    public AiClientService(RestClient openAiClient , ObjectMapper objectMapper, Validator validator) {
         this.validator = validator;
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-
-        requestFactory.setConnectTimeout(Duration.ofSeconds(2));
-        requestFactory.setReadTimeout(Duration.ofSeconds(8));
-
-        this.client = RestClient.builder().requestFactory(requestFactory).build();
+        this.client = openAiClient;
         this.objectMapper = objectMapper;
     }
 
@@ -48,7 +53,9 @@ public class AiClientService {
         }
     }
 
-    public AiResponseDTO generateAIResponse(WeatherResponse weatherServiceResponseDTO){
+
+
+    public AiResponseDTO generateAIResponse(WeatherResponse weatherServiceResponseDTO)  {
       int retries = 3;
       long delay = 1000;
 
