@@ -10,6 +10,11 @@ spring:
   openai:
     token: ${openAiToken}
 
+openai:
+  timeouts:
+    read: 8000
+    connect: 2000
+
 resilience:
   timelimiter:
     instances:
