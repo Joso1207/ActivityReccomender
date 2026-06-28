@@ -13,6 +13,7 @@ import java.util.List;
 public record AiResponseDTO(
         @Size(max = 50) String summary,
         @Max(1)@Min(0) Double confidence,
+        Boolean AI_Available,
         @NotNull
         List<@Pattern( regexp = "^(activity|commercial|catering|entertainment|heritage|leisure|natural|tourism|camping|beach|sport)$")
                 String> recommendations
