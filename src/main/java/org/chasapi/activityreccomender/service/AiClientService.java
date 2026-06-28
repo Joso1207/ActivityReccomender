@@ -105,16 +105,17 @@ public class AiClientService {
                         .build();
             }
 
-            return response;
+            return response.toBuilder().AI_Available(true).build();
         }catch (DatabindException ex){
             return fallback();
         }
     }
 
-    public AiResponseDTO fallback(){
+    public static AiResponseDTO fallback(){
         return AiResponseDTO.builder()
                 .summary("AI Weather Summary unavailable")
                 .confidence(1.0)
+                .AI_Available(false)
                 .recommendations(List.of("entertainment","commercial","catering"))
                 .build();
     }
