@@ -9,6 +9,7 @@ import org.chasapi.activityreccomender.dto.weather.WeatherResponse;
 import org.chasapi.activityreccomender.exceptions.ExternalServiceUnavailable;
 import org.chasapi.activityreccomender.exceptions.LocationNotFoundException;
 import org.chasapi.activityreccomender.service.ActivityService;
+import org.chasapi.activityreccomender.service.AiClientService;
 import org.chasapi.activityreccomender.webclient.GeoApifyClient;
 import org.chasapi.activityreccomender.webclient.OpenMeteoClient;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,9 @@ class ActivityServiceTests {
 
     @Mock
     private OpenMeteoClient weatherClient;
+
+    @Mock
+    private AiClientService aiClient;
 
     @Mock
     private GeoApifyClient geoApifyClient;
@@ -81,11 +85,14 @@ class ActivityServiceTests {
         when(weatherClient.getWeather(59.3293, 18.0686))
                 .thenReturn(Mono.just(weatherResponse));
 
+        when(aiClient.generateAIResponse(weatherResponse))
+                .thenReturn(new AiResponseDTO("Enjoy the weather",1.0,true,List.of("leisure.park","heritage","tourism")));
+
         when(geoApifyClient.getPlacesNearLocation(
                 59.3293,
                 18.0686,
-                List.of("leisure.park,heritage,tourism")
-        )).thenReturn(Mono.just(placeResponse));
+                List.of("leisure.park","heritage","tourism"))
+        ).thenReturn(Mono.just(placeResponse));
 
         StepVerifier.create(
                         activityService.getActivitiesByCoordinate(coordinates))
@@ -93,15 +100,17 @@ class ActivityServiceTests {
 
                     assert response.weather_available();
                     assert response.geosearch_available();
+                    assert response.AI_Available();
 
-                    assert response.recommended_activity()
+                    assert response.aiSummary()
                             .contains("Enjoy the weather");
-
                     assert response.recommended_activity()
-                            .contains("Camp");
+                            .contains("tourism");
                 })
                 .verifyComplete();
     }
+
+
 
     @Test
     void shouldReturnIndoorActivitiesWhenWeatherIsBad() {
@@ -124,10 +133,14 @@ class ActivityServiceTests {
         when(weatherClient.getWeather(59.3293, 18.0686))
                 .thenReturn(Mono.just(weatherResponse));
 
+        when(aiClient.generateAIResponse(weatherResponse))
+                .thenReturn(new AiResponseDTO("ITS RAINING CATS AND DOGS",1.0,true,List.of("entertainment","commercial")));
+
+
         when(geoApifyClient.getPlacesNearLocation(
                 59.3293,
                 18.0686,
-                List.of("entertainment")
+                List.of("entertainment","commercial")
         )).thenReturn(Mono.just(placeResponse));
 
         StepVerifier.create(
@@ -137,10 +150,10 @@ class ActivityServiceTests {
                     assert response.weather_available();
 
                     assert response.recommended_activity()
-                            .contains("Bowling");
+                            .contains("commercial");
 
                     assert response.recommended_activity()
-                            .contains("Cinema");
+                            .contains("entertainment");
                 })
                 .verifyComplete();
     }
@@ -166,10 +179,15 @@ class ActivityServiceTests {
         when(weatherClient.getWeather(59.3293, 18.0686))
                 .thenReturn(Mono.just(weatherResponse));
 
+
+        /* Stubbing AIClient is not neccesary,  It already returns fallback(with httpcall) when weatherservice is unavailable
+        when(aiClient.generateAIResponse(weatherResponse))
+                .thenReturn(fallback);
+         */
         when(geoApifyClient.getPlacesNearLocation(
                 59.3293,
                 18.0686,
-                List.of("entertainment,commercial,catering")
+                AiClientService.fallback().recommendations()
         )).thenReturn(Mono.just(placeResponse));
 
         StepVerifier.create(
@@ -179,9 +197,9 @@ class ActivityServiceTests {
                     assert !response.weather_available();
 
                     assert response.recommended_activity()
-                            .equals(List.of(
-                                    "Depends on weather, Shopping, Resturaunt, Entertainment"
-                            ));
+                            .contains(
+                                    "commercial"
+                            );
                 })
                 .verifyComplete();
     }

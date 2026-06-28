@@ -1,6 +1,7 @@
 package org.chasapi.activityreccomender.service;
 
 import org.chasapi.activityreccomender.dto.ActivityResponse;
+import org.chasapi.activityreccomender.dto.AiResponseDTO;
 import org.chasapi.activityreccomender.dto.InputCordinates;
 import org.chasapi.activityreccomender.dto.WeatherCode;
 import org.chasapi.activityreccomender.exceptions.ExternalServiceUnavailable;
@@ -20,15 +21,13 @@ public class ActivityService {
 
     private final OpenMeteoClient weatherClient;
     private final GeoApifyClient placesClient;
+    private final AiClientService aiService;
 
-    public ActivityService(OpenMeteoClient weatherClient, GeoApifyClient placesClient) {
+    public ActivityService(OpenMeteoClient weatherClient, GeoApifyClient placesClient, AiClientService aiService) {
         this.weatherClient = weatherClient;
         this.placesClient = placesClient;
+        this.aiService = aiService;
     }
-
-    private final List<String> indoorActivities = List.of("Stay inside","Bowling","Cinema","Entertainment");
-    private final List<String> outDoorActivities = List.of("Enjoy the weather","Camp","BirdWatch","Swim");
-    private final List<String> unknownWeatherActivityes= List.of("Depends on weather, Shopping, Resturaunt, Entertainment");
 
     public Mono<ActivityResponse> getActivity(String query) {
         return placesClient.getGeoLocation(query)
@@ -59,42 +58,43 @@ public class ActivityService {
     public Mono<ActivityResponse> getActivitiesByCoordinate(InputCordinates coordinates){
         return weatherClient.getWeather(coordinates.latitude(), coordinates.longitude()
         ).flatMap(weatherResponse ->{
-            String category;
-
+            List<String> category;
+            AiResponseDTO aiResponse;
 
             if(!weatherResponse.isAvailable()){
-                category = "entertainment,commercial,catering";
+                aiResponse = AiClientService.fallback();
+                category = List.of("entertainment","commercial","catering");
             }
-            else if (weatherResponse.current().weather_code() <= WeatherCode.OVERCAST.getCode()){
-                category = "leisure.park,heritage,tourism";
-            } else {
-                category = "entertainment";
+            else {
+                aiResponse = aiService.generateAIResponse(weatherResponse);
+
+                if(!aiResponse.AI_Available() && weatherResponse.current().weather_code()<= WeatherCode.OVERCAST.getCode()){
+                    category = List.of("nature","tourism","park");
+                } else {
+                    category = List.of("entertainment","commercial","catering");
+                }
+
+                if(aiResponse.AI_Available()){
+                    category = aiResponse.recommendations();
+                }
+
             }
 
+
+            List<String> finalCategory = category;
             return placesClient.getPlacesNearLocation(
                     coordinates.latitude(), coordinates.longitude(),
-                    List.of(category)
-            ).map(placeReponse ->{
+                    category
+            ).map(placeReponse -> new ActivityResponse(
+                    WeatherCode.fromCode(weatherResponse.current().weather_code()).getDescription(),
+                    aiResponse.summary(),
+                    finalCategory,
+                    placeReponse.place(),
+                    weatherResponse.isAvailable(),
+                    placeReponse.isAvailable(),
+                    aiResponse.AI_Available()
 
-                List<String> activities;
-                if(!weatherResponse.isAvailable()){
-                    activities = List.copyOf(unknownWeatherActivityes);
-                }
-                else if (weatherResponse.current().weather_code() <= WeatherCode.OVERCAST.getCode()){
-                    activities = List.copyOf(outDoorActivities);
-                } else {
-                    activities = List.copyOf(indoorActivities);
-                }
-
-                return new ActivityResponse(
-                        WeatherCode.fromCode(weatherResponse.current().weather_code()).getDescription(),
-                        activities,
-                        placeReponse.place(),
-                        weatherResponse.isAvailable(),
-                        placeReponse.isAvailable()
-
-                );
-            });
+            ));
         });
     }
 }
