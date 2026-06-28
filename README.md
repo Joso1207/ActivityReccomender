@@ -41,9 +41,9 @@ Assign them to Vars
 
 ---
 
-# 🌦️ External Data Sources
+#  External Data Sources
 
-## 🌍 Open-Meteo (Weather Data Provider)
+##  Open-Meteo (Weather Data Provider)
 
 This application uses **Open-Meteo** to retrieve weather data.
 
@@ -60,7 +60,7 @@ Used as the **weather data source** used in AI processing.
 
 ---
 
-## 🧭 Geoapify (Activity Categories & Location Enrichment)
+##  Geoapify (Activity Categories & Location Enrichment)
 
 Geoapify is used to map weather conditions to activity categories such as:
 
