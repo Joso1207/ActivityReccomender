@@ -69,7 +69,9 @@ public class AiClientService {
         );
 
         for(int i = 0; i<retries;i++){
-            System.out.println("OPENAI KEY: " + apiKey);
+
+            int attempt = i+1;
+            System.out.println("Attempt# " +  attempt);
             try{
                 ResponseEntity<String> response = client.post()
                         .uri("https://api.openai.com/v1/chat/completions")
@@ -83,14 +85,33 @@ public class AiClientService {
                     JsonNode root = objectMapper.readTree(response.getBody());
                     return parseToDTO(root.path("choices").get(0).path("message").path("content").asString());
                 }
+                if(response.getStatusCode().isSameCodeAs(HttpStatus.TOO_MANY_REQUESTS)){
+                    log.atError().log("To many Requests");
+                    Thread.sleep((long) (Math.pow(2,i)*delay));
+                    continue;
+                }
+                if(response.getStatusCode().is5xxServerError()){
+                    log.atError().log("5XX error detected.");
+                    Thread.sleep((long) (Math.pow(2,i)*delay));
+                    continue;
+                }
+                if(response.getStatusCode().is4xxClientError() && !response.getStatusCode().isSameCodeAs(HttpStatus.TOO_MANY_REQUESTS)){
+                    log.atError().log("Response code is {} and indicate unretryable error",response.getStatusCode());
+                    throw new IllegalStateException("Response was 4xx error");
+                }
             }catch (ResourceAccessException ex){
-                throw new RuntimeException("Network exception: API failed to respond",ex);
-            } catch (Exception e) {
+                log.atError().log("Network exception: API failed to respond",ex);
+            }catch(JacksonException ex) {
+                log.atError().log("Jackson Could not map the output,  Likely hallucination or malformed JSON");
+                return fallback();
+            }
+            catch (Exception e) {
+                log.atError().log();
                 throw new RuntimeException("Integration error", e);
             }
         }
 
-       throw new RuntimeException("Unreachable statement, implement graceful backoff");
+       throw new RuntimeException("Retries Expended");
     }
 
 
