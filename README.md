@@ -62,7 +62,7 @@ Used as the **weather data source** used in AI processing.
 
 ##  Geoapify (Activity Categories & Location Enrichment)
 
-Geoapify is used to map weather conditions to activity categories such as:
+Geoapify is used to find places for activities based on categories such as:
 
 - beach
 - tourism
@@ -78,7 +78,7 @@ Geoapify is used to map weather conditions to activity categories such as:
 
 ##  OpenAI API
 
-Used to generate structured natural language summaries and recommendations.
+Used to generate structured natural language summaries and recommendations of categories based on the weather.
 
 Expected output format:
 
