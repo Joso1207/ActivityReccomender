@@ -8,11 +8,11 @@ One such example was that it was prone to give weather warnings about the swedis
 It also frequently gave reccomendations which it was not allowed to, making it even more important to tighten the rules.
 
 Over all,  The important takeaways is that a system prompt needs to include 5 things to maintain reliability and avoid user input from tainting it.
-### 1. Describe what it needs to do, Preferably in concise programming terminology (Calling it to output DTO for example)
-### 2. Define what valid outputs looks like,  in this case actual JSON format with the proper fields and datatypes.
-### 3. Define each field within the JSON, including the length of textfields and limiting the lengths of lists, The AI needs to understand what each field represents ot it will hallucinate meaning that isnt there.
-### 4. RULES! a list of absolute constraints that the AI is not allowed to move outside.  Currently each rule within the AIClientService class is one that the AI has broken.
-### 5. The bounds of each field.  In this case the acceptable categories for GeoApify
+- 1. Describe what it needs to do, Preferably in concise programming terminology (Calling it to output DTO for example)
+- 2. Define what valid outputs looks like,  in this case actual JSON format with the proper fields and datatypes.
+- 3. Define each field within the JSON, including the length of textfields and limiting the lengths of lists, The AI needs to understand what each field represents ot it will hallucinate meaning that isnt there.
+- 4. RULES! a list of absolute constraints that the AI is not allowed to move outside.  Currently each rule within the AIClientService class is one that the AI has broken.
+- 5. The bounds of each field.  In this case the acceptable categories for GeoApify
 
 # Exception and Error Handling
 
