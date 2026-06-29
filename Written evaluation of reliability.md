@@ -66,7 +66,7 @@ Following up on Retries and what constitutes a transient error. Using an old HTT
   - 5XX - I Fucked up.
 
 We can reasonably assume that errors not on the users or our part are safe to retry.  So we engage the same retry policy on 5XX errors as describes above. 
-We do not however handle 3XX or 1XX errors.  But any 4XX errors with exception of 429 is not retried.
+We do not however handle 3XX or 1XX errors as they hit the retry loop by default. We might want to handle them in a production setting but we do not need to here. But we cannot retry 4XX errors with exception of 429, As those are typically from user error like bad input and thus theres no point in retrying it.
 
 ## Ai Criticism
 AI seems to be able to produce reliable output when proper definitions and fences are in place.  However it seems like even with these its rather prone to hallucinations.
