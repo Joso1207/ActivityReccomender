@@ -135,7 +135,7 @@ public class AiClientService {
 
             return response.toBuilder().AI_Available(true).build();
         }catch (DatabindException ex){
-            return fallback();
+            return fallback().toBuilder().summary("Failed to Bind response Data").build();
         }
     }
 
