@@ -47,7 +47,7 @@ class AIClientServiceTimeoutTests {
 
         // Assert log
         boolean logged = appender.list.stream()
-                .map(ILoggingEvent::getMessage)
+                .map(ILoggingEvent::getFormattedMessage)
                 .filter(Objects::nonNull)
                 .anyMatch(msg -> msg.contains("Network exception: API failed to respond"));
 
