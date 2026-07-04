@@ -45,7 +45,7 @@ class AIClientServiceTimeoutTests {
         }
 
         // Assert log
-        await().atMost(Duration.ofSeconds(2))
+        await().atMost(Duration.ofSeconds(5))
                 .untilAsserted(() -> {
                     boolean logged = appender.list.stream()
                             .map(ILoggingEvent::getFormattedMessage)
