@@ -60,5 +60,5 @@ jobs:
 
       - name: Push image
         run: |
-          docker tag activityreccomendation:latest ${{ secrets.DOCKERHUB_USERNAME }}/activityreccomendation:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/activityreccomendation:latest
+          docker tag activityreccomendation:latest ${{ secrets.DOCKER_HUB_USERNAME }}/activityreccomendation:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/activityreccomendation:latest
