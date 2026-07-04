@@ -13,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.chasapi.activityreccomender.service.AiClientService;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(properties = {
@@ -45,10 +47,9 @@ class AIClientServiceTimeoutTests {
 
         // Assert log
         boolean logged = appender.list.stream()
-                .anyMatch(event ->
-                        event.getMessage()
-                                .contains("Network exception: API failed to respond")
-                );
+                .map(ILoggingEvent::getMessage)
+                .filter(Objects::nonNull)
+                .anyMatch(msg -> msg.contains("Network exception: API failed to respond"));
 
         assertTrue(logged);
 
