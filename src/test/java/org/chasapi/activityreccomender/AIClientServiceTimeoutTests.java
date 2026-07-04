@@ -13,8 +13,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.chasapi.activityreccomender.service.AiClientService;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.Duration;
 import java.util.Objects;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(properties = {
@@ -25,9 +27,6 @@ class AIClientServiceTimeoutTests {
 
     @Autowired
     private AiClientService service;
-
-    @Mock
-    private GeoApifyClient mockgeoclient;
 
     @Test
     void shouldLogNetworkException() {
@@ -46,12 +45,16 @@ class AIClientServiceTimeoutTests {
         }
 
         // Assert log
-        boolean logged = appender.list.stream()
-                .map(ILoggingEvent::getFormattedMessage)
-                .filter(Objects::nonNull)
-                .anyMatch(msg -> msg.contains("Network exception: API failed to respond"));
+        await().atMost(Duration.ofSeconds(2))
+                .untilAsserted(() -> {
+                    boolean logged = appender.list.stream()
+                            .map(ILoggingEvent::getFormattedMessage)
+                            .filter(Objects::nonNull)
+                            .anyMatch(msg ->
+                                    msg.contains("Network exception: API failed to respond"));
 
-        assertTrue(logged);
+                    assertTrue(logged);
+                });
 
         logger.detachAppender(appender);
     }
