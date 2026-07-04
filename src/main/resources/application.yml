@@ -15,7 +15,7 @@ openai:
     read: 8000
     connect: 2000
 
-resilience:
+resilience4j:
   timelimiter:
     instances:
       openmeteo-api:
