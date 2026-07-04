@@ -40,12 +40,12 @@ class AIClientServiceTimeoutTests {
 
         try {
             service.generateAIResponse(WeatherResponse.builder().build());
-        } catch (Exception ignored) {
-            // expected failure after retries
+        } catch (Exception ex) {
+            System.out.print(ex.getClass());
         }
 
-        // Assert log
-        await().atMost(Duration.ofSeconds(5))
+        // Assert log with await
+        await().atMost(Duration.ofSeconds(2))
                 .untilAsserted(() -> {
                     boolean logged = appender.list.stream()
                             .map(ILoggingEvent::getFormattedMessage)

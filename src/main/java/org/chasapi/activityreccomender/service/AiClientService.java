@@ -14,6 +14,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.exc.StreamReadException;
 import tools.jackson.databind.DatabindException;
@@ -99,8 +100,12 @@ public class AiClientService {
                     log.atError().log("Response code is {} and indicate unretryable error",response.getStatusCode());
                     throw new IllegalStateException("Response was 4xx error");
                 }
-            }catch (ResourceAccessException ex){
-                log.atError().log("Network exception: API failed to respond",ex);
+            }catch (RestClientException ex) {
+                if (ex.getCause() instanceof SocketTimeoutException
+                        || ex instanceof ResourceAccessException) {
+
+                    log.atError().setCause(ex.getCause()).log("Network exception: API failed to respond",ex);
+                }
             }catch(JacksonException ex) {
                 log.atError().log("Jackson Could not map the output,  Likely hallucination or malformed JSON");
                 return fallback();
