@@ -5,6 +5,8 @@ spring:
   geoApify:
     key: dummykey
     hostname: http://localhost
+  openai:
+    token: dummytoken
 
 resilience4j:
   timelimiter:
