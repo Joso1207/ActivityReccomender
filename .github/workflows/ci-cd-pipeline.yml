@@ -43,6 +43,8 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     needs: build-and-test # We want to ensure we only push functional docker images
+    #and only on pushing to master, not PRs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
 
     steps:
       - uses: actions/checkout@v4
