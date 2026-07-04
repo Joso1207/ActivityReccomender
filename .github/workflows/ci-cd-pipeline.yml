@@ -39,3 +39,24 @@ jobs:
         with:
           name: test-reports
           path: build/reports/tests/
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: build-and-test # We want to ensure we only push functional docker images
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build image
+        run: docker build -t activityreccomendation:latest .
+
+      - name: Push image
+        run: |
+          docker tag activityreccomendation:latest ${{ secrets.DOCKERHUB_USERNAME }}/activityreccomendation:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/activityreccomendation:latest
