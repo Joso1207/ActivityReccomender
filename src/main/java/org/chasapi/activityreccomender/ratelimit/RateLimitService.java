@@ -14,11 +14,11 @@ public class RateLimitService {
     private final Cache cache;
     private final BucketFactory bucketFactory;
 
-    public RateLimitService(CacheManager cacheManager,
+    public RateLimitService(CacheManager syncCacheManager,
                             BucketFactory bucketFactory) {
 
         this.cache = Objects.requireNonNull(
-                cacheManager.getCache("rate-limits"));
+                syncCacheManager.getCache("rate-limits"));
 
         this.bucketFactory = bucketFactory;
     }
