@@ -138,8 +138,12 @@ public class GeoApifyClient {
                 .map(response -> new GeoPlacesResponse(true,response.place()))
                 .map(this::validate)
                 .onErrorResume(ex -> ex instanceof DecodingException, ex ->
-                        Mono.error(new RuntimeException(
-                                "Failed to decode Places data from API", ex))
+                        Mono.error(new ExternalApiException(
+                                "Failed to decode GeoLocation from API", ex))
+                )
+                .onErrorResume(ex -> ex instanceof ConstraintViolationException, ex ->
+                        Mono.error(new ExternalApiException(
+                                "External API violated constraints", ex))
                 )
                 .doOnNext(r -> System.out.println("SUCCESS: " + r))
                 .doOnError(e -> System.out.println("ERROR: " + e.getClass() + " - " + e.getMessage()))
