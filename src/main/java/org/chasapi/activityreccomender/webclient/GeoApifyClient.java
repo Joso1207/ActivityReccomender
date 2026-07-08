@@ -1,6 +1,8 @@
 package org.chasapi.activityreccomender.webclient;
 
 
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.chasapi.activityreccomender.dto.places.GeoLocationResponse;
 import org.chasapi.activityreccomender.dto.places.GeoPlacesResponse;
@@ -30,11 +32,33 @@ public class GeoApifyClient {
     private final WebClient client;
     private final ReactiveCircuitBreaker circuitBreaker;
     private final Scheduler retryScheduler;
+    private final Validator validator;
 
-    public GeoApifyClient(WebClient.Builder builder, @Value("${spring.geoApify.hostname}") String baseURL, ReactiveCircuitBreakerFactory<?,?> factory, Scheduler retryScheduler){
+    public GeoApifyClient(WebClient.Builder builder, @Value("${spring.geoApify.hostname}") String baseURL, ReactiveCircuitBreakerFactory<?,?> factory, Scheduler retryScheduler, Validator validator){
         this.circuitBreaker = factory.create("geoapify-api");
         this.retryScheduler = retryScheduler;
+        this.validator = validator;
         this.client = builder.baseUrl(baseURL).build();
+    }
+
+    private GeoLocationResponse validate(GeoLocationResponse response) {
+        var violations = validator.validate(response);
+
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
+
+        return response;
+    }
+
+    private GeoPlacesResponse validate(GeoPlacesResponse response) {
+        var violations = validator.validate(response);
+
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
+
+        return response;
     }
 
     //using freeform adress query instead of City as using the structured address limits results to cities only which may even be in other countries,
@@ -65,9 +89,14 @@ public class GeoApifyClient {
                         })
                 )
                 .map(response -> response.toBuilder().isAvailable(true).build())
+                .map(this::validate)
                 .onErrorResume(ex -> ex instanceof DecodingException, ex ->
-                        Mono.error(new RuntimeException(
+                        Mono.error(new ExternalApiException(
                                 "Failed to decode GeoLocation from API", ex))
+                )
+                .onErrorResume(ex -> ex instanceof ConstraintViolationException, ex ->
+                        Mono.error(new ExternalApiException(
+                                "External API violated constraints", ex))
                 )
                 .doOnNext(r -> System.out.println("SUCCESS: " + r))
                 .doOnError(e -> System.out.println("ERROR: " + e.getClass() + " - " + e.getMessage()))
@@ -107,6 +136,7 @@ public class GeoApifyClient {
                         })
                 )
                 .map(response -> new GeoPlacesResponse(true,response.place()))
+                .map(this::validate)
                 .onErrorResume(ex -> ex instanceof DecodingException, ex ->
                         Mono.error(new RuntimeException(
                                 "Failed to decode Places data from API", ex))

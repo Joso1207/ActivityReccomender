@@ -1,5 +1,6 @@
 package org.chasapi.activityreccomender.service;
 
+import jakarta.validation.Valid;
 import org.chasapi.activityreccomender.dto.ActivityResponse;
 import org.chasapi.activityreccomender.dto.AiResponseDTO;
 import org.chasapi.activityreccomender.dto.InputCordinates;
@@ -9,6 +10,7 @@ import org.chasapi.activityreccomender.exceptions.LocationNotFoundException;
 import org.chasapi.activityreccomender.webclient.GeoApifyClient;
 import org.chasapi.activityreccomender.webclient.OpenMeteoClient;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.List;
 //The places and weather services would not have any additional logic other than calling the clients since its this class that decides what the clients should fetch
 
 @Service
+@Validated
 public class ActivityService {
 
     private final OpenMeteoClient weatherClient;
@@ -55,7 +58,7 @@ public class ActivityService {
     }
 
 
-    public Mono<ActivityResponse> getActivitiesByCoordinate(InputCordinates coordinates){
+    public Mono<ActivityResponse> getActivitiesByCoordinate( @Valid InputCordinates coordinates){
         return weatherClient.getWeather(coordinates.latitude(), coordinates.longitude()
         ).flatMap(weatherResponse ->{
             List<String> category;

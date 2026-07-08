@@ -1,5 +1,8 @@
 package org.chasapi.activityreccomender.webclient;
 
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
+import org.chasapi.activityreccomender.dto.places.GeoPlacesResponse;
 import org.chasapi.activityreccomender.dto.weather.WeatherResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -27,17 +30,29 @@ public class OpenMeteoClient {
     private final WebClient client;
     private final ReactiveCircuitBreaker circuitBreaker;
     private final Scheduler retryScheduler;
+    private final Validator validator;
 
     public OpenMeteoClient(
             WebClient.Builder builder,
             @Value("${spring.meteo.hostname}") String baseUrl,
-            ReactiveCircuitBreakerFactory<?,?> cbFactory, Scheduler retryScheduler
+            ReactiveCircuitBreakerFactory<?,?> cbFactory, Scheduler retryScheduler, Validator validator
     ) {
         this.retryScheduler = retryScheduler;
+        this.validator = validator;
         this.client = builder
                 .baseUrl(baseUrl)
                 .build();
         this.circuitBreaker = cbFactory.create("openmeteo-api");
+    }
+
+    private WeatherResponse validate(WeatherResponse response) {
+        var violations = validator.validate(response);
+
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
+
+        return response;
     }
 
 
@@ -78,9 +93,14 @@ public class OpenMeteoClient {
                 .map(weatherResponse -> weatherResponse.toBuilder()
                         .isAvailable(true)
                         .build())
+                .map(this::validate)
                 .onErrorResume(ex -> ex instanceof DecodingException, ex ->
-                    Mono.error(new RuntimeException(
+                    Mono.error(new ExternalApiException(
                         "Failed to decode WeatherResponse from API", ex))
+                )
+                .onErrorResume(ex -> ex instanceof ConstraintViolationException, ex ->
+                        Mono.error(new ExternalApiException(
+                                "External API violated constraints", ex))
                 )
                 .doOnNext(r -> System.out.println("SUCCESS: " + r))
                 .doOnError(e -> System.out.println("ERROR: " + e.getClass() + " - " + e.getMessage()))
