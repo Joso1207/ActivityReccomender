@@ -1,5 +1,7 @@
 package org.chasapi.activityreccomender.dto.weather;
 
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import lombok.Builder;
 
 @Builder(toBuilder = true)
