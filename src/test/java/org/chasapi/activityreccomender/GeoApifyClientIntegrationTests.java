@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.runners.model.MultipleFailureException.assertEmpty;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -166,10 +167,16 @@ class GeoApifyClientIntegrationTests {
                 .setHeader("Content-Type", "application/json")
                 .setBody("""
                     {
-                      "results": [
+                      "features": [
                         {
-                          "lat": 59.3293,
-                          "lon": 18.0686
+                          "properties":{},
+                          "geometry":{
+                            "type":"point",
+                            "coordinates":{
+                                "latitude":59.3293,
+                                "longitude":18.0686
+                            }
+                          }
                         }
                       ]
                     }
@@ -217,5 +224,35 @@ class GeoApifyClientIntegrationTests {
         assertNull(cache.get("Invalid"));
     }
 
+    @Test
+    void shouldReturnFallbackWhenExternalApiResponseViolatesConstraints() {
 
+        // Arrange: response violates your DTO constraints
+        String invalidResponse = """
+            {
+              "features": [
+                {
+                  "geometry": {
+                    "type": "Point",
+                    "coordinates": null
+                  }
+                }
+              ]
+            }
+            """;
+
+        mockWebServer.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(invalidResponse));
+
+
+        // Act + Assert
+        StepVerifier.create(client.getGeoLocation("Stockholm"))
+                .assertNext(response -> {
+                    assertFalse(response.isAvailable());
+                    assertTrue(response.features().isEmpty());
+                })
+                .verifyComplete();
+    }
 }
