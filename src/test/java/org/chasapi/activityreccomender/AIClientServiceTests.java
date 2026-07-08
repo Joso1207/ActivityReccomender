@@ -8,11 +8,16 @@ import org.chasapi.activityreccomender.dto.AiResponseDTO;
 import org.chasapi.activityreccomender.dto.weather.CurrentWeatherData;
 import org.chasapi.activityreccomender.dto.weather.WeatherResponse;
 import org.chasapi.activityreccomender.service.AiClientService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.client.RestClient;
@@ -21,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
+import java.util.Objects;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,15 +44,24 @@ class AIClientServiceTests {
     @MockitoBean
     private RestClient restClient;
 
+    @Autowired
+    @Qualifier("asyncCacheManager")
+    private CacheManager cacheManager;
+
+    @BeforeEach
+    void clearCache() {
+        Objects.requireNonNull(cacheManager.getCache("AI_Response")).clear();
+    }
 
     @Test
     void shouldRetryThreeTimesOn429() {
 
         stub429(restClient);
 
-        assertThrows(RuntimeException.class,
-                () -> service.generateAIResponse(
-                        WeatherResponse.builder().build()));
+        assertFalse(service.generateAIResponse(
+                            WeatherResponse.builder().build()
+                        ).AI_Available()
+        );
 
         verify(restClient, times(3)).post();
     }
@@ -71,6 +86,63 @@ class AIClientServiceTests {
 
             when(response.toEntity(String.class))
                     .thenReturn(ResponseEntity.status(429).build());
+
+            return post;
+        });
+    }
+
+    static void stub200(RestClient client) {
+
+        String string = """
+    {
+      "choices": [{
+        "message": {
+          "content": "{\\"summary\\":\\"Sunny\\",\\"confidence\\":0.9,\\"recommendations\\":[\\"beach\\"]}"
+        }
+      }]
+    }
+    """;
+
+        when(client.post()).thenAnswer(invocation -> {
+
+            var post = mock(RestClient.RequestBodyUriSpec.class);
+            var body = mock(RestClient.RequestBodySpec.class);
+            var response = mock(RestClient.ResponseSpec.class);
+
+            when(post.uri(anyString())).thenReturn(body);
+            when(body.header(anyString(), anyString())).thenReturn(body);
+
+            when(body.body(any(Map.class))).thenReturn(body);
+            when(body.body(any())).thenReturn(body);
+
+            when(body.retrieve()).thenReturn(response);
+
+            when(response.toEntity(String.class))
+                    .thenReturn(ResponseEntity.ok(string));
+
+            return post;
+        });
+    }
+
+    static void stub500(RestClient client) {
+
+
+        when(client.post()).thenAnswer(invocation -> {
+
+            var post = mock(RestClient.RequestBodyUriSpec.class);
+            var body = mock(RestClient.RequestBodySpec.class);
+            var response = mock(RestClient.ResponseSpec.class);
+
+            when(post.uri(anyString())).thenReturn(body);
+            when(body.header(anyString(), anyString())).thenReturn(body);
+
+            when(body.body(any(Map.class))).thenReturn(body);
+            when(body.body(any())).thenReturn(body);
+
+            when(body.retrieve()).thenReturn(response);
+
+            when(response.toEntity(String.class))
+                    .thenReturn(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("ERROR"));
 
             return post;
         });
@@ -140,6 +212,45 @@ class AIClientServiceTests {
         assertEquals("AI Weather Summary unavailable", result.summary());
         assertFalse(result.AI_Available());
     }
+    @Test
+    void shouldCacheSuccessfulResponse() {
+
+        WeatherResponse weather = WeatherResponse.builder()
+                .isAvailable(true)
+                .build();
+
+        stub200(restClient);
+
+        AiResponseDTO first = service.generateAIResponse(weather);
+        AiResponseDTO second = service.generateAIResponse(weather);
+
+        assertTrue(first.AI_Available());
+        assertTrue(second.AI_Available());
+
+        // Second call should come from the cache
+        verify(restClient, times(1)).post();
+    }
+
+
+    @Test
+    void shouldNotCacheUnavailableResponse() {
+
+        WeatherResponse weather = WeatherResponse.builder()
+                .isAvailable(true)
+                .build();
+
+        stub500(restClient);
+
+        AiResponseDTO first = service.generateAIResponse(weather);
+        AiResponseDTO second = service.generateAIResponse(weather);
+
+        assertFalse(first.AI_Available());
+        assertFalse(second.AI_Available());
+
+        // Both calls should invoke the API with retries, because the fallback isn't cached
+        verify(restClient, times(6)).post();
+    }
+
 
 
 }

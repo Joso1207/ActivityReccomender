@@ -1,0 +1,28 @@
+
+
+#1 issue - OWASP 2023.  #4 Unrestricted resource consumption.
+
+We currently do not have ANY restrictions to how often a user can use our service,
+Which can be expensive if a malicious actor sets up an automated means to call our service.
+This could be very expensive as we pay for OpenAI,  but it could also be similar to DDOS as our service is limited by the rate in GeoApify
+
+How to solve?
+Rate limits and Caching the results from our external APIs, This causes frequently searched locations to only needing to call the APIs when the cache becomes stale.
+
+
+#2 issue - OWASP 2023 #10 Unsafe Consumption of APIs
+While we validate some responses like that from the OpenAI,
+we should also validate the responses from OpenGeofy and OpenMeteo.
+
+The actual security risk from this is low due to how we use the responses but the implementation is still relevant to show
+how we avoid passing malformed data down the chain.
+
+
+#3 issue - OWASP 2023 #8 Security Missconfiguration (More like no configuration)
+
+A low risk issue at the moment.  However without a cors config a potential frontend script cannot call on our API.
+As I have modeled my API akin to other publicly available APIs like SWAPI,
+And also do not have debugging endpoints like that of actuator.
+I fail to see how a cors policy could become "To Permissive" in the projects current state.
+
+BUT! this would no longer be true if the project expands and includes more protected endpoints.

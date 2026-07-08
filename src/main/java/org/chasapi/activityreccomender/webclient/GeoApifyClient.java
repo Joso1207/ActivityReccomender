@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.chasapi.activityreccomender.dto.places.GeoLocationResponse;
 import org.chasapi.activityreccomender.dto.places.GeoPlacesResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory;
 import org.springframework.core.codec.DecodingException;
@@ -38,6 +39,11 @@ public class GeoApifyClient {
 
     //using freeform adress query instead of City as using the structured address limits results to cities only which may even be in other countries,
     //Freeform allows one to specify more specificity
+    @Cacheable(
+            cacheNames = "locationData",
+            cacheManager = "asyncCacheManager",
+            unless = "#result.isAvailable() == false"
+    )
     public Mono<GeoLocationResponse> getGeoLocation(String query){
         Mono<GeoLocationResponse> request = client.get()
                 .uri(uriBuilder -> uriBuilder
@@ -47,7 +53,6 @@ public class GeoApifyClient {
                         .build())
                 .retrieve()
                 .bodyToMono(GeoLocationResponse.class)
-
                 .retryWhen(Retry.backoff(3,Duration.ofSeconds(2)).scheduler(retryScheduler)
                         .filter(ex -> {
                             if (ex instanceof WebClientRequestException) {

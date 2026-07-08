@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.chasapi.activityreccomender.dto.AiResponseDTO;
 import org.chasapi.activityreccomender.dto.weather.WeatherResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -54,8 +55,14 @@ public class AiClientService {
         }
     }
 
-
-
+    //We do not need to use the entire object body as a key,  Simply something uniquely identifiable.
+    //Since the weather object is both generated and cached based on coordinates, and also contains those coordinates.
+    //We can cache this based on the same coordinates
+    @Cacheable(
+            cacheNames = "AI_Response",
+            key = "#weatherServiceResponseDTO.latitude + ':' + #weatherServiceResponseDTO.longitude",
+            unless = "#result.AI_Available() == false"
+    )
     public AiResponseDTO generateAIResponse(WeatherResponse weatherServiceResponseDTO)  {
       int retries = 3;
       long delay = 1000;
@@ -116,7 +123,8 @@ public class AiClientService {
             }
         }
 
-       throw new RuntimeException("Retries Expended");
+       //throw new RuntimeException("Retries Expended");
+        return fallback();
     }
 
 

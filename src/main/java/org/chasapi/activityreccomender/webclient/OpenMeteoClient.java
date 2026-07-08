@@ -2,6 +2,7 @@ package org.chasapi.activityreccomender.webclient;
 
 import org.chasapi.activityreccomender.dto.weather.WeatherResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreaker;
 import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory;
 import org.springframework.core.codec.DecodingException;
@@ -39,6 +40,12 @@ public class OpenMeteoClient {
         this.circuitBreaker = cbFactory.create("openmeteo-api");
     }
 
+
+    @Cacheable(
+            cacheNames = "WeatherData",
+            cacheManager = "asyncCacheManager",
+            unless = "#result.isAvailable() == false"
+    )
     public Mono<WeatherResponse> getWeather(double latitude, double longitude){
         Mono<WeatherResponse> response = client.get()
                 .uri(uriBuilder -> uriBuilder
@@ -59,11 +66,15 @@ public class OpenMeteoClient {
                                 .doBeforeRetry(signal ->
                                         System.out.println("RETRY #" + signal.totalRetriesInARow())
                                 )
-                                .filter(ex ->
-                                        ex instanceof WebClientRequestException ||
-                                                (ex instanceof WebClientResponseException r &&
-                                                        r.getStatusCode().is5xxServerError())
-                                ))
+                                .filter(ex -> {
+                                    if (ex instanceof WebClientRequestException) {
+                                        return true;
+                                    }
+                                    if (ex instanceof WebClientResponseException responseEx) {
+                                        return responseEx.getStatusCode().is5xxServerError();
+                                    }
+                                    return false;
+                                }))
                 .map(weatherResponse -> weatherResponse.toBuilder()
                         .isAvailable(true)
                         .build())
@@ -79,10 +90,6 @@ public class OpenMeteoClient {
                     System.out.println("CANCELLED - capturing stack");
                     new RuntimeException("cancel trace").printStackTrace();
         });
-
-
-
-
         return circuitBreaker.run(
                 response,
                 ex -> Mono.just(
