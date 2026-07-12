@@ -53,6 +53,7 @@ class RateLimitTests {
     @Test
     void shouldRateLimitRequests() {
         for (int i = 0; i < 5; i++) {
+            System.out.println("Test");
             webTestClient.get()
                     .uri("/api/recomendations?query=test")
                     .exchange()
